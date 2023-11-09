@@ -40,6 +40,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Client = void 0;
+const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 class Client {
     constructor(githubToken, issueNumber, owner, repo) {
@@ -51,17 +52,33 @@ class Client {
     }
     SelectComments(userName) {
         return __awaiter(this, void 0, void 0, function* () {
-            const resp = yield this.octokit.rest.issues.listComments({
-                owner: this.owner,
-                repo: this.repo,
-                issue_number: this.issueNumber
-            });
             const ids = [];
-            for (const r of resp.data) {
-                if (r.user !== null && r.user.login !== userName) {
-                    continue;
+            // continually page through comments ...
+            const max_pages = 1000000;
+            for (let page = 1; page <= max_pages; page++) {
+                const resp = yield this.octokit.rest.issues.listComments({
+                    owner: this.owner,
+                    repo: this.repo,
+                    issue_number: this.issueNumber,
+                    page
+                });
+                // ... until we've read them all
+                if (!resp.data) {
+                    core.info(`GitHub returned null data`);
+                    break;
                 }
-                ids.push(r.node_id);
+                // ... until we've read them all
+                if (resp.data.length === 0) {
+                    core.info(`page ${page} was empty`);
+                    break;
+                }
+                core.info(`page ${page} contained ${resp.data.length} entries`);
+                for (const r of resp.data) {
+                    if (r.user !== null && r.user.login !== userName) {
+                        continue;
+                    }
+                    ids.push(r.node_id);
+                }
             }
             return new Promise(resolve => resolve(ids));
         });
@@ -138,6 +155,7 @@ function run() {
             const nbOfCommentsToLeave = parseInt(core.getInput('leave_visible'), 10);
             const issueNumber = issueNumberAsString === '' ? undefined : parseInt(issueNumberAsString, 10);
             const cli = new client_1.Client(token, issueNumber);
+            core.info(`Hiding all but ${nbOfCommentsToLeave} comments from ${userName}`);
             const ids = yield cli.SelectComments(userName);
             ids.splice(-nbOfCommentsToLeave, nbOfCommentsToLeave);
             for (const id of ids) {
@@ -145,6 +163,7 @@ function run() {
             }
         }
         catch (error) {
+            core.error('An error occurred');
             // TODO: more verbose messages than "Error: Not Found" (#29)
             if (error instanceof Error)
                 core.setFailed(error.message);
