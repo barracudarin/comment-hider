@@ -47,9 +47,18 @@ export class Client {
       })
 
       // ... until we've read them all
-      if (!resp.data || resp.data.length == 0) {
+      if (!resp.data) {
+        console.log(`GitHub returned null data`)
         break
       }
+
+      // ... until we've read them all
+      if (resp.data.length == 0) {
+        console.log(`page ${page} was empty`)
+        break
+      }
+
+      console.log(`page ${page} contained ${resp.data.length} entries`)
 
       for (const r of resp.data) {
         if (r.user !== null && r.user.login !== userName) {
