@@ -1,3 +1,4 @@
+import * as core from '@actions/core'
 import * as github from '@actions/github'
 
 import {GitHub} from '@actions/github/lib/utils'
@@ -48,17 +49,17 @@ export class Client {
 
       // ... until we've read them all
       if (!resp.data) {
-        console.log(`GitHub returned null data`)
+        core.info(`GitHub returned null data`)
         break
       }
 
       // ... until we've read them all
       if (resp.data.length == 0) {
-        console.log(`page ${page} was empty`)
+        core.info(`page ${page} was empty`)
         break
       }
 
-      console.log(`page ${page} contained ${resp.data.length} entries`)
+      core.info(`page ${page} contained ${resp.data.length} entries`)
 
       for (const r of resp.data) {
         if (r.user !== null && r.user.login !== userName) {
