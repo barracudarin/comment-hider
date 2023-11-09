@@ -16,12 +16,15 @@ async function run(): Promise<void> {
       issueNumberAsString === '' ? undefined : parseInt(issueNumberAsString, 10)
 
     const cli = new Client(token, issueNumber)
+
+    core.info(`Hiding all but ${nbOfCommentsToLeave} comments from ${userName}`)
     const ids = await cli.SelectComments(userName)
     ids.splice(-nbOfCommentsToLeave, nbOfCommentsToLeave)
     for (const id of ids) {
       await cli.HideComment(id, reason)
     }
   } catch (error) {
+    core.error('An error occurred')
     // TODO: more verbose messages than "Error: Not Found" (#29)
     if (error instanceof Error) core.setFailed(error.message)
   }
