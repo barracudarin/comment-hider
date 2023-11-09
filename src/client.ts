@@ -39,12 +39,13 @@ export class Client {
     const ids: string[] = []
 
     // continually page through comments ...
-    for (let page = 1; true; page++) {
+    const max_pages = 1000000
+    for (let page = 1; page <= max_pages; page++) {
       const resp = await this.octokit.rest.issues.listComments({
         owner: this.owner,
         repo: this.repo,
         issue_number: this.issueNumber,
-        page: page
+        page
       })
 
       // ... until we've read them all
@@ -54,7 +55,7 @@ export class Client {
       }
 
       // ... until we've read them all
-      if (resp.data.length == 0) {
+      if (resp.data.length === 0) {
         core.info(`page ${page} was empty`)
         break
       }
